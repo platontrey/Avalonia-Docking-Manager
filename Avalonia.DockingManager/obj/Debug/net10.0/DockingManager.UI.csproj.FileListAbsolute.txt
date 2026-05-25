@@ -1,0 +1,14 @@
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/bin/Debug/net10.0/DockingManager.UI.deps.json
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/bin/Debug/net10.0/DockingManager.UI.dll
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/bin/Debug/net10.0/DockingManager.UI.pdb
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/obj/Debug/net10.0/DockingManager.UI.csproj.AssemblyReference.cache
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/obj/Debug/net10.0/Avalonia/Resources.Inputs.cache
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/obj/Debug/net10.0/Avalonia/resources
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/obj/Debug/net10.0/DockingManager.UI.GeneratedMSBuildEditorConfig.editorconfig
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/obj/Debug/net10.0/DockingManager.UI.AssemblyInfoInputs.cache
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/obj/Debug/net10.0/DockingManager.UI.AssemblyInfo.cs
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/obj/Debug/net10.0/DockingManager.UI.csproj.CoreCompileInputs.cache
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/obj/Debug/net10.0/DockingManager.UI.dll
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/obj/Debug/net10.0/refint/DockingManager.UI.dll
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/obj/Debug/net10.0/DockingManager.UI.pdb
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/DockingManager.UI/obj/Debug/net10.0/ref/DockingManager.UI.dll

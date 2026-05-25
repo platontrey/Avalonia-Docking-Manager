@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="clr-namespace:Avalonia.DockingManager.Models"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Avalonia.DockingManager.Controls.DockTabGroup"
+             x:DataType="models:DockTabGroupNode"
+             Background="#252526">
+    <TabControl ItemsSource="{Binding Panels}"
+                SelectedItem="{Binding ActivePanel, Mode=TwoWay}"
+                Background="Transparent"
+                BorderThickness="0"
+                Margin="0">
+        <TabControl.ItemTemplate>
+            <DataTemplate x:DataType="models:DockPanelNode">
+                <Border Background="Transparent" 
+                        PointerPressed="OnTabPointerPressed" 
+                        PointerMoved="OnTabPointerMoved" 
+                        PointerReleased="OnTabPointerReleased">
+                    <TextBlock Text="{Binding Title}" Padding="8,4" Foreground="#CCCCCC"/>
+                </Border>
+            </DataTemplate>
+        </TabControl.ItemTemplate>
+        <TabControl.ContentTemplate>
+            <DataTemplate x:DataType="models:DockPanelNode">
+                <ContentControl Content="{Binding Content}"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Background="#1E1E1E"/>
+            </DataTemplate>
+        </TabControl.ContentTemplate>
+        <TabControl.Styles>
+            <Style Selector="TabItem">
+                <Setter Property="Background" Value="#2D2D30"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Margin" Value="0,0,1,0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="MinHeight" Value="28"/>
+            </Style>
+            <Style Selector="TabItem:selected">
+                <Setter Property="Background" Value="#1E1E1E"/>
+                <Setter Property="BorderBrush" Value="#007ACC"/>
+                <Setter Property="BorderThickness" Value="0,2,0,0"/>
+            </Style>
+            <Style Selector="TabItem:selected TextBlock">
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+            </Style>
+            <Style Selector="TabItem:pointerover">
+                <Setter Property="Background" Value="#3E3E42"/>
+            </Style>
+        </TabControl.Styles>
+    </TabControl>
+</UserControl>

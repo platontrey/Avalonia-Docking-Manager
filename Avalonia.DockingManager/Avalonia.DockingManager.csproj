@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <!-- NuGet Package Properties -->
+    <PackageId>Avalonia.DockingManager</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>platontrey</Authors>
+    <Company>platontrey</Company>
+    <Description>A highly customizable, MVVM-friendly Docking Manager for Avalonia UI, heavily inspired by the window management systems of Unreal Engine 5 and JetBrains IDEs. Supports drag and drop, tear-off windows, nested layout workspaces, and smooth real-time resizing.</Description>
+    <PackageTags>avalonia;avaloniaui;docking;dock;manager;layout;mvvm;ui;windows</PackageTags>
+    <RepositoryUrl>https://github.com/platontrey/Avalonia-Docking-Manager</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/platontrey/Avalonia-Docking-Manager</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    
+    <!-- Build Settings for NuGet -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\DOCUMENTATION.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.0.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.3" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
+  </ItemGroup>
+
+</Project>

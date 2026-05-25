@@ -1,0 +1,44 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DockingManager.ViewModels"
+        xmlns:controls="using:Avalonia.DockingManager.Controls"
+        xmlns:models="using:Avalonia.DockingManager.Models"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1024" d:DesignHeight="768"
+        x:Class="DockingManager.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="DockingManager"
+        Background="#1E1E1E">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto, *">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Background="#333333" Margin="10" Spacing="10">
+            <Button Content="Save Layout" Command="{Binding SaveLayoutCommand}" />
+            <Button Content="Load Layout" Command="{Binding LoadLayoutCommand}" />
+        </StackPanel>
+
+        <TabControl Grid.Row="1"
+                    ItemsSource="{Binding Workspaces}" 
+                    SelectedItem="{Binding ActiveWorkspace}"
+                Background="#2D2D30"
+                Padding="0">
+        <TabControl.ItemTemplate>
+            <DataTemplate x:DataType="models:WorkspaceNode">
+                <TextBlock Text="{Binding Title}" Padding="15,8" FontSize="14" FontWeight="SemiBold" Foreground="#EEEEEE" />
+            </DataTemplate>
+        </TabControl.ItemTemplate>
+        <TabControl.ContentTemplate>
+            <DataTemplate x:DataType="models:WorkspaceNode">
+                <Border Background="#1E1E1E">
+                    <controls:DockManager LayoutRoot="{Binding LayoutRoot}" />
+                </Border>
+            </DataTemplate>
+        </TabControl.ContentTemplate>
+    </TabControl>
+    </Grid>
+</Window>

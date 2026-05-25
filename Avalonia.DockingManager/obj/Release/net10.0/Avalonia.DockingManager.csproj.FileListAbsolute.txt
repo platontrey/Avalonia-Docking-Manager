@@ -1,0 +1,14 @@
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/bin/Release/net10.0/Avalonia.DockingManager.deps.json
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/bin/Release/net10.0/Avalonia.DockingManager.dll
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/bin/Release/net10.0/Avalonia.DockingManager.pdb
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/obj/Release/net10.0/Avalonia.DockingManager.csproj.AssemblyReference.cache
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/obj/Release/net10.0/Avalonia/Resources.Inputs.cache
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/obj/Release/net10.0/Avalonia/resources
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/obj/Release/net10.0/Avalonia.DockingManager.GeneratedMSBuildEditorConfig.editorconfig
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/obj/Release/net10.0/Avalonia.DockingManager.AssemblyInfoInputs.cache
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/obj/Release/net10.0/Avalonia.DockingManager.AssemblyInfo.cs
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/obj/Release/net10.0/Avalonia.DockingManager.csproj.CoreCompileInputs.cache
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/obj/Release/net10.0/Avalonia.DockingManager.dll
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/obj/Release/net10.0/refint/Avalonia.DockingManager.dll
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/obj/Release/net10.0/Avalonia.DockingManager.pdb
+/media/platontrey/01D740DD76155AA0/Projects/DockingManager/Avalonia.DockingManager/obj/Release/net10.0/ref/Avalonia.DockingManager.dll

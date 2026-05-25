@@ -1,0 +1,42 @@
+{
+  "Title": "Material",
+  "LayoutRoot": {
+    "$type": "group",
+    "Children": [
+      {
+        "$type": "tabGroup",
+        "Panels": [
+          {
+            "Id": "",
+            "Title": "Palette",
+            "DockSize": "1*"
+          }
+        ],
+        "ActivePanel": {
+          "Id": "",
+          "Title": "Palette",
+          "DockSize": "1*"
+        },
+        "DockSize": "1*"
+      },
+      {
+        "$type": "tabGroup",
+        "Panels": [
+          {
+            "Id": "",
+            "Title": "Graph",
+            "DockSize": "1*"
+          }
+        ],
+        "ActivePanel": {
+          "Id": "",
+          "Title": "Graph",
+          "DockSize": "1*"
+        },
+        "DockSize": "1*"
+      }
+    ],
+    "IsHorizontal": true,
+    "DockSize": "1*"
+  }
+}
