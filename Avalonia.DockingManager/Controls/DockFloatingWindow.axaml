@@ -1,0 +1,13 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Avalonia.DockingManager.Controls"
+        x:Class="Avalonia.DockingManager.Controls.DockFloatingWindow"
+        Title="Floating Panel"
+        Width="520" Height="420"
+        MinWidth="240" MinHeight="180"
+        Background="{DynamicResource SurfaceBaseBrush}">
+
+    <Border Background="{DynamicResource SurfaceBaseBrush}">
+        <controls:DockManager x:Name="PART_DockManager" />
+    </Border>
+</Window>

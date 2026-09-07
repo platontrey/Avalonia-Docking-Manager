@@ -79,6 +79,21 @@ public static class DockSerializer
         return workspace;
     }
 
+    public static string SerializeNode(DockNode node)
+    {
+        return JsonSerializer.Serialize(node, GetOptions());
+    }
+
+    public static DockNode? DeserializeNode(string json)
+    {
+        var root = JsonSerializer.Deserialize<DockNode>(json, GetOptions());
+        if (root != null)
+        {
+            RestoreParents(root, null);
+        }
+        return root;
+    }
+
     private static void RestoreParents(DockNode node, DockNode? parent)
     {
         node.Parent = parent;

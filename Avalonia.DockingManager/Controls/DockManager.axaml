@@ -18,13 +18,17 @@
         </DataTemplate>
     </UserControl.DataTemplates>
 
-    <Grid>
-        <!-- The main layout root -->
-        <ContentControl x:Name="LayoutHost"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch" />
+    <!-- The base plate. Panels sit on it as separate rounded slabs; the
+         6px padding matches the gap the splitters reserve between them. -->
+    <Border Background="{DynamicResource SurfaceBaseBrush}" Padding="6">
+        <Grid>
+            <!-- The main layout root -->
+            <ContentControl x:Name="LayoutHost"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch" />
 
-        <!-- Overlay layer for Drag & Drop visual guides will go here -->
-        <Canvas x:Name="OverlayCanvas" IsHitTestVisible="False" />
-    </Grid>
+            <!-- Interactive Docking Compass and Drop Target Overlay -->
+            <controls:DockDropOverlay x:Name="DropOverlay" IsHitTestVisible="False" />
+        </Grid>
+    </Border>
 </UserControl>

@@ -5,50 +5,134 @@
              xmlns:models="clr-namespace:Avalonia.DockingManager.Models"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Avalonia.DockingManager.Controls.DockTabGroup"
-             x:DataType="models:DockTabGroupNode"
-             Background="#252526">
-    <TabControl ItemsSource="{Binding Panels}"
-                SelectedItem="{Binding ActivePanel, Mode=TwoWay}"
-                Background="Transparent"
-                BorderThickness="0"
-                Margin="0">
-        <TabControl.ItemTemplate>
-            <DataTemplate x:DataType="models:DockPanelNode">
-                <Border Background="Transparent" 
-                        PointerPressed="OnTabPointerPressed" 
-                        PointerMoved="OnTabPointerMoved" 
-                        PointerReleased="OnTabPointerReleased">
-                    <TextBlock Text="{Binding Title}" Padding="8,4" Foreground="#CCCCCC"/>
-                </Border>
-            </DataTemplate>
-        </TabControl.ItemTemplate>
-        <TabControl.ContentTemplate>
-            <DataTemplate x:DataType="models:DockPanelNode">
-                <ContentControl Content="{Binding Content}"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Stretch"
-                                Background="#1E1E1E"/>
-            </DataTemplate>
-        </TabControl.ContentTemplate>
-        <TabControl.Styles>
-            <Style Selector="TabItem">
-                <Setter Property="Background" Value="#2D2D30"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Margin" Value="0,0,1,0"/>
-                <Setter Property="Padding" Value="0"/>
-                <Setter Property="MinHeight" Value="28"/>
-            </Style>
-            <Style Selector="TabItem:selected">
-                <Setter Property="Background" Value="#1E1E1E"/>
-                <Setter Property="BorderBrush" Value="#007ACC"/>
-                <Setter Property="BorderThickness" Value="0,2,0,0"/>
-            </Style>
-            <Style Selector="TabItem:selected TextBlock">
-                <Setter Property="Foreground" Value="#FFFFFF"/>
-            </Style>
-            <Style Selector="TabItem:pointerover">
-                <Setter Property="Background" Value="#3E3E42"/>
-            </Style>
-        </TabControl.Styles>
-    </TabControl>
+             x:DataType="models:DockTabGroupNode">
+
+    <!-- The slab. Its background is the tab-strip tone; the active tab and the
+         content area share the lighter tone, so the selected tab reads as a
+         tongue of the panel rather than a separate box. -->
+    <Border Background="{DynamicResource SurfaceSlab2Brush}"
+            CornerRadius="{DynamicResource RadiusSlab}"
+            ClipToBounds="True">
+
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- Tab strip. A ListBox rather than a TabControl: TabControl swaps a
+                 single content presenter, which destroys and recreates whatever
+                 the inactive tab hosted. -->
+            <ListBox Grid.Row="0"
+                     ItemsSource="{Binding Panels}"
+                     SelectedItem="{Binding ActivePanel, Mode=TwoWay}"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Padding="4,4,0,0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="2"/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem">
+                        <Setter Property="Background"      Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Padding"         Value="0"/>
+                        <Setter Property="Margin"          Value="0"/>
+                        <Setter Property="MinHeight"       Value="28"/>
+                        <Setter Property="CornerRadius"    Value="9,9,0,0"/>
+                        <Setter Property="Foreground"      Value="{DynamicResource TextTertiaryBrush}"/>
+                        <Setter Property="Cursor"          Value="Hand"/>
+                    </Style>
+                    <Style Selector="ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+                        <Setter Property="Background"   Value="Transparent"/>
+                        <Setter Property="CornerRadius" Value="9,9,0,0"/>
+                        <Setter Property="Padding"      Value="0"/>
+                    </Style>
+                    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                    </Style>
+                    <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceSlabBrush}"/>
+                    </Style>
+                    <Style Selector="ListBoxItem:pointerover">
+                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                    </Style>
+                    <Style Selector="ListBoxItem:selected">
+                        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                    </Style>
+
+                    <Style Selector="Button.TabCloseBtn">
+                        <Setter Property="Background"      Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Foreground"      Value="{DynamicResource TextTertiaryBrush}"/>
+                        <Setter Property="Width"           Value="16"/>
+                        <Setter Property="Height"          Value="16"/>
+                        <Setter Property="FontSize"        Value="11"/>
+                        <Setter Property="CornerRadius"    Value="999"/>
+                        <Setter Property="Padding"         Value="0"/>
+                        <Setter Property="Margin"          Value="2,0,0,0"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                        <Setter Property="VerticalContentAlignment"   Value="Center"/>
+                    </Style>
+                    <Style Selector="Button.TabCloseBtn:pointerover">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                    </Style>
+                </ListBox.Styles>
+
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:DockPanelNode">
+                        <Border Background="Transparent"
+                                PointerPressed="OnTabPointerPressed"
+                                PointerMoved="OnTabPointerMoved"
+                                PointerReleased="OnTabPointerReleased"
+                                Padding="12,6">
+                            <Border.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Float" Click="OnContextMenuFloat" CommandParameter="{Binding}" IsEnabled="{Binding CanFloat}"/>
+                                    <Separator/>
+                                    <MenuItem Header="Close" Click="OnContextMenuClose" CommandParameter="{Binding}" IsEnabled="{Binding CanClose}"/>
+                                    <MenuItem Header="Close Others" Click="OnContextMenuCloseOthers" CommandParameter="{Binding}"/>
+                                    <MenuItem Header="Close Tabs to Right" Click="OnContextMenuCloseRight" CommandParameter="{Binding}"/>
+                                </ContextMenu>
+                            </Border.ContextMenu>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding Title}"
+                                           VerticalAlignment="Center"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"/>
+                                <Button Content="×"
+                                        Classes="TabCloseBtn"
+                                        Click="OnCloseTabClick"
+                                        CommandParameter="{Binding}"
+                                        IsVisible="{Binding CanClose}"
+                                        VerticalAlignment="Center"
+                                        ToolTip.Tip="Close Panel"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Content. Every panel stays realised; only visibility toggles. -->
+            <ItemsControl Grid.Row="1"
+                          ItemsSource="{Binding Panels}"
+                          Background="{DynamicResource SurfaceSlabBrush}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Panel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:DockPanelNode">
+                        <ContentControl Content="{Binding Content}"
+                                        IsVisible="{Binding IsActive}"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+    </Border>
 </UserControl>

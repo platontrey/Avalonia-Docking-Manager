@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Specialized;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
@@ -5,12 +6,14 @@ using Avalonia.DockingManager.Models;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Data;
+using Avalonia.Input;
 
 namespace Avalonia.DockingManager.Controls;
 
 public partial class DockGroup : UserControl
 {
-    private Grid _grid;
+    private Grid _grid = null!;
+    private readonly IBrush _splitterHoverBrush = new SolidColorBrush(Color.FromArgb(140, 0, 122, 204));
 
     public DockGroup()
     {
@@ -31,14 +34,24 @@ public partial class DockGroup : UserControl
             {
                 for (int i = 0; i < node.Children.Count; i++)
                 {
-                    node.Children[i].DockSize = _grid.ColumnDefinitions[i * 2].Width;
+                    var newWidth = _grid.ColumnDefinitions[i * 2].Width;
+                    if (Math.Abs(node.Children[i].DockSize.Value - newWidth.Value) > 0.001 ||
+                        node.Children[i].DockSize.GridUnitType != newWidth.GridUnitType)
+                    {
+                        node.Children[i].DockSize = newWidth;
+                    }
                 }
             }
             else if (!node.IsHorizontal && _grid.RowDefinitions.Count == node.Children.Count * 2 - 1)
             {
                 for (int i = 0; i < node.Children.Count; i++)
                 {
-                    node.Children[i].DockSize = _grid.RowDefinitions[i * 2].Height;
+                    var newHeight = _grid.RowDefinitions[i * 2].Height;
+                    if (Math.Abs(node.Children[i].DockSize.Value - newHeight.Value) > 0.001 ||
+                        node.Children[i].DockSize.GridUnitType != newHeight.GridUnitType)
+                    {
+                        node.Children[i].DockSize = newHeight;
+                    }
                 }
             }
         }
@@ -55,7 +68,7 @@ public partial class DockGroup : UserControl
 
     private DockGroupNode? _currentNode;
 
-    protected override void OnDataContextChanged(System.EventArgs e)
+    protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
 
@@ -76,7 +89,7 @@ public partial class DockGroup : UserControl
         }
     }
 
-    private void Children_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    private void Children_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         if (_currentNode != null) RebuildGrid(_currentNode);
     }
@@ -117,15 +130,15 @@ public partial class DockGroup : UserControl
 
             if (node.IsHorizontal)
             {
-                var colDef = new ColumnDefinition();
-                colDef.Bind(ColumnDefinition.WidthProperty, new Binding(nameof(DockNode.DockSize)) { Source = childNode, Mode = BindingMode.TwoWay });
+                contentControl.MinWidth = 120;
+                var colDef = new ColumnDefinition { Width = childNode.DockSize, MinWidth = 120 };
                 _grid.ColumnDefinitions.Add(colDef);
                 Grid.SetColumn(contentControl, i * 2);
             }
             else
             {
-                var rowDef = new RowDefinition();
-                rowDef.Bind(RowDefinition.HeightProperty, new Binding(nameof(DockNode.DockSize)) { Source = childNode, Mode = BindingMode.TwoWay });
+                contentControl.MinHeight = 80;
+                var rowDef = new RowDefinition { Height = childNode.DockSize, MinHeight = 80 };
                 _grid.RowDefinitions.Add(rowDef);
                 Grid.SetRow(contentControl, i * 2);
             }
@@ -135,12 +148,31 @@ public partial class DockGroup : UserControl
             // Add splitter if not last item
             if (i < node.Children.Count - 1)
             {
+                int leftIdx = i;
+                int rightIdx = i + 1;
+
                 var splitter = new GridSplitter
                 {
-                    Background = new SolidColorBrush(Color.Parse("#333333")),
+                    Background = Brushes.Transparent,
                     ResizeDirection = node.IsHorizontal ? GridResizeDirection.Columns : GridResizeDirection.Rows,
                     ResizeBehavior = GridResizeBehavior.PreviousAndNext,
-                    ShowsPreview = DockManager.ShowSplitterPreview
+                    ShowsPreview = DockManager.ShowSplitterPreview,
+                    Cursor = node.IsHorizontal ? new Cursor(StandardCursorType.SizeWestEast) : new Cursor(StandardCursorType.SizeNorthSouth)
+                };
+
+                // Visual hover highlight on splitter
+                splitter.PointerEntered += (s, e) => splitter.Background = _splitterHoverBrush;
+                splitter.PointerExited  += (s, e) => splitter.Background = Brushes.Transparent;
+
+                // Double click: reset adjacent panes to 50/50 equal proportions
+                splitter.DoubleTapped += (s, e) =>
+                {
+                    if (DataContext is DockGroupNode gNode && leftIdx < gNode.Children.Count && rightIdx < gNode.Children.Count)
+                    {
+                        gNode.Children[leftIdx].DockSize  = new GridLength(1, GridUnitType.Star);
+                        gNode.Children[rightIdx].DockSize = new GridLength(1, GridUnitType.Star);
+                        RebuildGrid(gNode);
+                    }
                 };
 
                 if (node.IsHorizontal)

@@ -1,8 +1,136 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Avalonia.DockingManager.DockDropOverlay">
-  Welcome to Avalonia!
+             x:Class="Avalonia.DockingManager.Controls.DockDropOverlay"
+             IsHitTestVisible="False">
+
+    <Canvas x:Name="PART_Canvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+        <!-- Translucent dock preview rectangle showing target layout slot -->
+        <Border x:Name="PART_PreviewBorder"
+                Background="#2B007ACC"
+                BorderBrush="#FF007ACC"
+                BorderThickness="2"
+                CornerRadius="8"
+                IsVisible="False"/>
+
+        <!-- Root Outer Edge Dock Indicators -->
+        <Border x:Name="PART_RootTop"
+                Width="38" Height="38"
+                CornerRadius="8"
+                Background="#E61E1E22"
+                BorderBrush="#55FFFFFF"
+                BorderThickness="1"
+                BoxShadow="0 4 16 #80000000"
+                IsVisible="False">
+            <Path Data="M 10,22 L 19,13 L 28,22 Z"
+                  Fill="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+
+        <Border x:Name="PART_RootBottom"
+                Width="38" Height="38"
+                CornerRadius="8"
+                Background="#E61E1E22"
+                BorderBrush="#55FFFFFF"
+                BorderThickness="1"
+                BoxShadow="0 4 16 #80000000"
+                IsVisible="False">
+            <Path Data="M 10,16 L 19,25 L 28,16 Z"
+                  Fill="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+
+        <Border x:Name="PART_RootLeft"
+                Width="38" Height="38"
+                CornerRadius="8"
+                Background="#E61E1E22"
+                BorderBrush="#55FFFFFF"
+                BorderThickness="1"
+                BoxShadow="0 4 16 #80000000"
+                IsVisible="False">
+            <Path Data="M 22,10 L 13,19 L 22,28 Z"
+                  Fill="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+
+        <Border x:Name="PART_RootRight"
+                Width="38" Height="38"
+                CornerRadius="8"
+                Background="#E61E1E22"
+                BorderBrush="#55FFFFFF"
+                BorderThickness="1"
+                BoxShadow="0 4 16 #80000000"
+                IsVisible="False">
+            <Path Data="M 16,10 L 25,19 L 16,28 Z"
+                  Fill="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- Center Group Compass (Diamond) -->
+        <Canvas x:Name="PART_Compass" Width="116" Height="116" IsVisible="False">
+            <!-- Center Tab button -->
+            <Border x:Name="PART_CompassCenter"
+                    Canvas.Left="40" Canvas.Top="40"
+                    Width="36" Height="36"
+                    CornerRadius="6"
+                    Background="#E61E1E22"
+                    BorderBrush="#55FFFFFF"
+                    BorderThickness="1"
+                    BoxShadow="0 4 12 #60000000">
+                <Rectangle Width="14" Height="14"
+                           RadiusX="2" RadiusY="2"
+                           Stroke="#FFFFFFFF" StrokeThickness="2"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Top Button -->
+            <Border x:Name="PART_CompassTop"
+                    Canvas.Left="40" Canvas.Top="4"
+                    Width="36" Height="34"
+                    CornerRadius="6"
+                    Background="#E61E1E22"
+                    BorderBrush="#55FFFFFF"
+                    BorderThickness="1"
+                    BoxShadow="0 4 12 #60000000">
+                <Path Data="M 10,21 L 18,12 L 26,21 Z"
+                      Fill="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Bottom Button -->
+            <Border x:Name="PART_CompassBottom"
+                    Canvas.Left="40" Canvas.Top="78"
+                    Width="36" Height="34"
+                    CornerRadius="6"
+                    Background="#E61E1E22"
+                    BorderBrush="#55FFFFFF"
+                    BorderThickness="1"
+                    BoxShadow="0 4 12 #60000000">
+                <Path Data="M 10,13 L 18,22 L 26,13 Z"
+                      Fill="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Left Button -->
+            <Border x:Name="PART_CompassLeft"
+                    Canvas.Left="4" Canvas.Top="40"
+                    Width="34" Height="36"
+                    CornerRadius="6"
+                    Background="#E61E1E22"
+                    BorderBrush="#55FFFFFF"
+                    BorderThickness="1"
+                    BoxShadow="0 4 12 #60000000">
+                <Path Data="M 21,10 L 12,18 L 21,26 Z"
+                      Fill="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Right Button -->
+            <Border x:Name="PART_CompassRight"
+                    Canvas.Left="78" Canvas.Top="40"
+                    Width="34" Height="36"
+                    CornerRadius="6"
+                    Background="#E61E1E22"
+                    BorderBrush="#55FFFFFF"
+                    BorderThickness="1"
+                    BoxShadow="0 4 12 #60000000">
+                <Path Data="M 13,10 L 22,18 L 13,26 Z"
+                      Fill="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+        </Canvas>
+
+    </Canvas>
 </UserControl>

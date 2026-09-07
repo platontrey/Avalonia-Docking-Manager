@@ -1,12 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
-using Avalonia.Media;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 using Avalonia.DockingManager.Models;
+using Avalonia.DockingManager.Services;
 
 namespace Avalonia.DockingManager.Controls;
 
@@ -27,33 +27,42 @@ public partial class DockManager : UserControl
     /// </summary>
     public static bool ShowSplitterPreview { get; set; } = false;
 
-    private ContentControl _layoutHost;
-    private Canvas _overlayCanvas;
-    private Rectangle _highlightRect;
+    private ContentControl _layoutHost = null!;
+    private DockDropOverlay _dropOverlay = null!;
 
-    private DockPanelNode? _draggedPanel;
-    private DockTabGroupNode? _sourceGroup;
-    private bool _isDragging;
     private DockTabGroup? _lastTarget;
-    private DockZone _lastZone;
+    private DockZone _lastZone = DockZone.None;
+
+    public struct DragTargetCache
+    {
+        public DockTabGroup Group;
+        public Rect BoundsInManager;
+    }
+
+    private readonly List<DragTargetCache> _cachedDragTargets = new();
 
     public DockManager()
     {
         InitializeComponent();
-        _layoutHost = this.FindControl<ContentControl>("LayoutHost")!;
-        _overlayCanvas = this.FindControl<Canvas>("OverlayCanvas")!;
-
-        _highlightRect = new Rectangle
-        {
-            Fill = new SolidColorBrush(Color.FromArgb(100, 0, 122, 204)),
-            IsVisible = false
-        };
-        _overlayCanvas.Children.Add(_highlightRect);
     }
 
     private void InitializeComponent()
     {
         AvaloniaXamlLoader.Load(this);
+        _layoutHost   = this.FindControl<ContentControl>("LayoutHost")!;
+        _dropOverlay  = this.FindControl<DockDropOverlay>("DropOverlay")!;
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        DockDragCoordinator.Register(this);
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        DockDragCoordinator.Unregister(this);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -65,66 +74,11 @@ public partial class DockManager : UserControl
         }
     }
 
-    private struct DragTargetCache
+    public void PrepareDragTargets()
     {
-        public DockTabGroup Group;
-        public Rect BoundsInManager;
-    }
-    
-    private System.Collections.Generic.List<DragTargetCache> _cachedDragTargets = new();
-
-    public void ShowOverlay(Rect rectInManager, DockZone zone)
-    {
-        _highlightRect.IsVisible = true;
-        
-        double x = rectInManager.X;
-        double y = rectInManager.Y;
-        double w = rectInManager.Width;
-        double h = rectInManager.Height;
-
-        switch (zone)
-        {
-            case DockZone.Top:
-                h /= 2;
-                break;
-            case DockZone.Bottom:
-                y += h / 2;
-                h /= 2;
-                break;
-            case DockZone.Left:
-                w /= 2;
-                break;
-            case DockZone.Right:
-                x += w / 2;
-                w /= 2;
-                break;
-            case DockZone.Center:
-                // Full rect
-                break;
-        }
-
-        Canvas.SetLeft(_highlightRect, x);
-        Canvas.SetTop(_highlightRect, y);
-        _highlightRect.Width = w;
-        _highlightRect.Height = h;
-    }
-
-    public void HideOverlay()
-    {
-        _highlightRect.IsVisible = false;
-    }
-
-    public void BeginDrag(DockPanelNode panel, DockTabGroupNode source)
-    {
-        _draggedPanel = panel;
-        _sourceGroup = source;
-        _isDragging = true;
-
-        // OPTIMIZATION: Cache visual descendants and their bounds ONCE when drag begins.
-        // This avoids costly visual tree traversal and matrix transforms 60+ times per second.
         _cachedDragTargets.Clear();
         var allGroups = this.GetVisualDescendants().OfType<DockTabGroup>();
-        foreach(var g in allGroups)
+        foreach (var g in allGroups)
         {
             var transform = g.TransformToVisual(this);
             if (transform.HasValue)
@@ -137,10 +91,8 @@ public partial class DockManager : UserControl
 
     public void UpdateDrag(Point positionInManager)
     {
-        if (!_isDragging) return;
-
         DragTargetCache? hitTarget = null;
-        foreach(var target in _cachedDragTargets)
+        foreach (var target in _cachedDragTargets)
         {
             if (target.BoundsInManager.Contains(positionInManager))
             {
@@ -148,145 +100,172 @@ public partial class DockManager : UserControl
                 break;
             }
         }
-        
-        if (hitTarget != null)
-        {
-            // Calculate relative position within the target bounds
-            double relX = positionInManager.X - hitTarget.Value.BoundsInManager.X;
-            double relY = positionInManager.Y - hitTarget.Value.BoundsInManager.Y;
-            var posInTarget = new Point(relX, relY);
 
-            var zone = GetZone(posInTarget, hitTarget.Value.Group.Bounds.Size);
-            ShowOverlay(hitTarget.Value.BoundsInManager, zone);
-            
-            _lastTarget = hitTarget.Value.Group;
-            _lastZone = zone;
-        }
-        else 
-        {
-            HideOverlay();
-            _lastTarget = null;
-        }
+        _lastZone = _dropOverlay.UpdateOverlay(hitTarget?.BoundsInManager, this.Bounds, positionInManager);
+        _lastTarget = hitTarget?.Group;
     }
 
-    public void EndDrag(Point dropPositionInManager)
+    public void HideOverlay()
     {
-        if (_isDragging && _draggedPanel != null && _sourceGroup != null)
+        _dropOverlay.Hide();
+        _lastTarget = null;
+        _lastZone = DockZone.None;
+    }
+
+    public void EndDrag(DockPanelNode panel, DockTabGroupNode source, Point dropPositionInManager)
+    {
+        var zone = _lastZone;
+        var targetGroup = _lastTarget?.DataContext as DockTabGroupNode;
+        HideOverlay();
+
+        if (panel == null || source == null) return;
+
+        // 1. Root outer edge dock
+        if (zone is DockZone.RootTop or DockZone.RootBottom or DockZone.RootLeft or DockZone.RootRight)
         {
-            if (_lastTarget != null)
+            PerformRootDock(panel, source, zone);
+            return;
+        }
+
+        // 2. Dock into targeted tab group
+        if (targetGroup != null && zone != DockZone.None)
+        {
+            PerformDock(panel, source, targetGroup, zone);
+            return;
+        }
+
+        // 3. If dropped on empty manager
+        if (LayoutRoot == null)
+        {
+            source.Panels.Remove(panel);
+            CleanupEmptyGroup(source);
+
+            var newGroup = new DockTabGroupNode();
+            newGroup.Panels.Add(panel);
+            panel.Parent = newGroup;
+            newGroup.ActivePanel = panel;
+            LayoutRoot = newGroup;
+            return;
+        }
+
+        // 4. Default fallback: dropped inside manager without a valid dock zone.
+        // Keep panel safely docked inside its source group instead of creating an OS window!
+        if (!source.Panels.Contains(panel))
+        {
+            source.Panels.Add(panel);
+            panel.Parent = source;
+        }
+        source.ActivePanel = panel;
+    }
+
+    public void PerformRootDock(DockPanelNode panel, DockTabGroupNode source, DockZone zone)
+    {
+        int oldIndex = source.Panels.IndexOf(panel);
+        source.Panels.Remove(panel);
+        if (source.ActivePanel == panel || source.ActivePanel == null || !source.Panels.Contains(source.ActivePanel))
+        {
+            if (source.Panels.Count > 0)
             {
-                var targetNode = _lastTarget.DataContext as DockTabGroupNode;
-                PerformDock(_draggedPanel, _sourceGroup, targetNode, _lastZone);
+                int nextIdx = Math.Clamp(oldIndex, 0, source.Panels.Count - 1);
+                source.ActivePanel = source.Panels[nextIdx];
             }
             else
             {
-                TearOff(_draggedPanel, _sourceGroup, dropPositionInManager);
+                source.ActivePanel = null;
             }
         }
-        _isDragging = false;
-        HideOverlay();
-        _lastTarget = null;
-        _draggedPanel = null;
-        _sourceGroup = null;
-    }
 
-    private void TearOff(DockPanelNode panel, DockTabGroupNode source, Point dropPosition)
-    {
-        // Remove from source
-        source.Panels.Remove(panel);
+        var newGroup = new DockTabGroupNode();
+        newGroup.Panels.Add(panel);
+        panel.Parent = newGroup;
+        newGroup.ActivePanel = panel;
+
+        var oldRoot = LayoutRoot;
+        if (oldRoot == null)
+        {
+            LayoutRoot = newGroup;
+            CleanupEmptyGroup(source);
+            return;
+        }
+
+        bool isHorizontal = zone is DockZone.RootLeft or DockZone.RootRight;
+        var newRoot = new DockGroupNode(isHorizontal);
+
+        if (isHorizontal)
+        {
+            newGroup.DockSize = new GridLength(0.25, GridUnitType.Star);
+            oldRoot.DockSize  = new GridLength(0.75, GridUnitType.Star);
+        }
+        else
+        {
+            newGroup.DockSize = new GridLength(0.3, GridUnitType.Star);
+            oldRoot.DockSize  = new GridLength(0.7, GridUnitType.Star);
+        }
+
+        if (zone is DockZone.RootLeft or DockZone.RootTop)
+        {
+            newRoot.Children.Add(newGroup);
+            newRoot.Children.Add(oldRoot);
+        }
+        else
+        {
+            newRoot.Children.Add(oldRoot);
+            newRoot.Children.Add(newGroup);
+        }
+
+        newGroup.Parent = newRoot;
+        oldRoot.Parent = newRoot;
+        LayoutRoot = newRoot;
+
         CleanupEmptyGroup(source);
-
-        var screenPoint = this.PointToScreen(dropPosition);
-
-        var floatingWindow = new Window
-        {
-            Title = panel.Title,
-            Width = 400,
-            Height = 300,
-            WindowStartupLocation = WindowStartupLocation.Manual,
-            Position = screenPoint,
-            Background = new SolidColorBrush(Color.Parse("#1E1E1E"))
-        };
-
-        var newRoot = new DockTabGroupNode();
-        newRoot.Panels.Add(panel);
-        newRoot.ActivePanel = panel;
-
-        var childManager = new DockManager
-        {
-            LayoutRoot = newRoot
-        };
-
-        floatingWindow.Content = childManager;
-        floatingWindow.Show();
-    }
-
-    private DockTabGroup? FindTargetTabGroup(Point p)
-    {
-        var allGroups = this.GetVisualDescendants().OfType<DockTabGroup>();
-        foreach(var g in allGroups)
-        {
-            var transform = this.TransformToVisual(g);
-            if (transform.HasValue)
-            {
-                var pInG = p.Transform(transform.Value);
-                if (new Rect(g.Bounds.Size).Contains(pInG))
-                {
-                    return g;
-                }
-            }
-        }
-        return null;
-    }
-
-    private DockZone GetZone(Point p, Size bounds)
-    {
-        double normalizedX = p.X / bounds.Width;
-        double normalizedY = p.Y / bounds.Height;
-
-        if (normalizedX > 0.25 && normalizedX < 0.75 && normalizedY > 0.25 && normalizedY < 0.75)
-            return DockZone.Center;
-
-        double distTop = normalizedY;
-        double distBottom = 1.0 - normalizedY;
-        double distLeft = normalizedX;
-        double distRight = 1.0 - normalizedX;
-
-        double min = Math.Min(Math.Min(distTop, distBottom), Math.Min(distLeft, distRight));
-
-        if (min == distTop) return DockZone.Top;
-        if (min == distBottom) return DockZone.Bottom;
-        if (min == distLeft) return DockZone.Left;
-        return DockZone.Right;
     }
 
     public void PerformDock(DockPanelNode panel, DockTabGroupNode source, DockTabGroupNode target, DockZone zone)
     {
         if (panel == null || source == null || target == null) return;
-        if (source == target && zone == DockZone.Center) return; // Dropping on same group center does nothing
+        if (source == target && (zone == DockZone.Center || source.Panels.Count <= 1)) return;
 
-        // Remove from source
+        // Remove from source group
+        int oldIndex = source.Panels.IndexOf(panel);
         source.Panels.Remove(panel);
+        if (source.ActivePanel == panel || source.ActivePanel == null || !source.Panels.Contains(source.ActivePanel))
+        {
+            if (source.Panels.Count > 0)
+            {
+                int nextIdx = Math.Clamp(oldIndex, 0, source.Panels.Count - 1);
+                source.ActivePanel = source.Panels[nextIdx];
+            }
+            else
+            {
+                source.ActivePanel = null;
+            }
+        }
 
         if (zone == DockZone.Center)
         {
             target.Panels.Add(panel);
+            panel.Parent = target;
             target.ActivePanel = panel;
         }
         else
         {
             var parentGroup = target.Parent as DockGroupNode;
+            bool needHorizontal = zone is DockZone.Left or DockZone.Right;
+
+            var newGroup = new DockTabGroupNode();
+            newGroup.Panels.Add(panel);
+            panel.Parent = newGroup;
+            newGroup.ActivePanel = panel;
+
             if (parentGroup == null)
             {
                 if (LayoutRoot == target)
                 {
-                    bool isHorizontal = zone == DockZone.Left || zone == DockZone.Right;
-                    var newRoot = new DockGroupNode(isHorizontal);
-                    var newGroup = new DockTabGroupNode();
-                    newGroup.Panels.Add(panel);
-                    newGroup.ActivePanel = panel;
+                    var newRoot = new DockGroupNode(needHorizontal);
+                    newGroup.DockSize = new GridLength(0.5, GridUnitType.Star);
+                    target.DockSize   = new GridLength(0.5, GridUnitType.Star);
 
-                    if (zone == DockZone.Left || zone == DockZone.Top)
+                    if (zone is DockZone.Left or DockZone.Top)
                     {
                         newRoot.Children.Add(newGroup);
                         newRoot.Children.Add(target);
@@ -296,35 +275,38 @@ public partial class DockManager : UserControl
                         newRoot.Children.Add(target);
                         newRoot.Children.Add(newGroup);
                     }
-                    target.Parent = newRoot;
+                    target.Parent   = newRoot;
                     newGroup.Parent = newRoot;
-                    LayoutRoot = newRoot;
+                    LayoutRoot      = newRoot;
                 }
             }
             else
             {
-                bool needHorizontal = zone == DockZone.Left || zone == DockZone.Right;
-                var newGroup = new DockTabGroupNode();
-                newGroup.Panels.Add(panel);
-                newGroup.ActivePanel = panel;
-
                 int index = parentGroup.Children.IndexOf(target);
 
                 if (parentGroup.IsHorizontal == needHorizontal)
                 {
-                    if (zone == DockZone.Left || zone == DockZone.Top)
+                    newGroup.DockSize = new GridLength(0.5, GridUnitType.Star);
+                    target.DockSize   = new GridLength(0.5, GridUnitType.Star);
+
+                    if (zone is DockZone.Left or DockZone.Top)
                         parentGroup.Children.Insert(index, newGroup);
                     else
                         parentGroup.Children.Insert(index + 1, newGroup);
+
                     newGroup.Parent = parentGroup;
                 }
                 else
                 {
                     var wrapper = new DockGroupNode(needHorizontal);
+                    wrapper.DockSize = target.DockSize;
                     parentGroup.Children[index] = wrapper;
                     wrapper.Parent = parentGroup;
 
-                    if (zone == DockZone.Left || zone == DockZone.Top)
+                    newGroup.DockSize = new GridLength(0.5, GridUnitType.Star);
+                    target.DockSize   = new GridLength(0.5, GridUnitType.Star);
+
+                    if (zone is DockZone.Left or DockZone.Top)
                     {
                         wrapper.Children.Add(newGroup);
                         wrapper.Children.Add(target);
@@ -335,15 +317,39 @@ public partial class DockManager : UserControl
                         wrapper.Children.Add(newGroup);
                     }
                     newGroup.Parent = wrapper;
-                    target.Parent = wrapper;
+                    target.Parent   = wrapper;
                 }
             }
         }
-        
+
         CleanupEmptyGroup(source);
     }
 
-    private void CleanupEmptyGroup(DockTabGroupNode source)
+    public void TearOff(DockPanelNode panel, DockTabGroupNode source, PixelPoint screenPosition)
+    {
+        if (!panel.CanFloat) return;
+
+        int oldIndex = source.Panels.IndexOf(panel);
+        source.Panels.Remove(panel);
+        if (source.ActivePanel == panel || source.ActivePanel == null || !source.Panels.Contains(source.ActivePanel))
+        {
+            if (source.Panels.Count > 0)
+            {
+                int nextIdx = Math.Clamp(oldIndex, 0, source.Panels.Count - 1);
+                source.ActivePanel = source.Panels[nextIdx];
+            }
+            else
+            {
+                source.ActivePanel = null;
+            }
+        }
+        CleanupEmptyGroup(source);
+
+        var floatingWindow = DockFloatingWindow.Create(panel, screenPosition);
+        floatingWindow.Show();
+    }
+
+    public void CleanupEmptyGroup(DockTabGroupNode source)
     {
         if (source.Panels.Count == 0)
         {
@@ -358,11 +364,23 @@ public partial class DockManager : UserControl
                         int idx = grandParent.Children.IndexOf(srcParent);
                         grandParent.Children[idx] = remaining;
                         remaining.Parent = grandParent;
+                        remaining.DockSize = srcParent.DockSize;
                     }
                     else if (LayoutRoot == srcParent)
                     {
                         LayoutRoot = remaining;
                         remaining.Parent = null;
+                    }
+                }
+                else if (srcParent.Children.Count == 0)
+                {
+                    if (srcParent.Parent is DockGroupNode grandParent)
+                    {
+                        grandParent.Children.Remove(srcParent);
+                    }
+                    else if (LayoutRoot == srcParent)
+                    {
+                        LayoutRoot = null;
                     }
                 }
             }
